@@ -33,10 +33,11 @@ Future features I'm planning to add soon:
 
 ### Pico to LED Matrix
 
-I strongly suggest soldering the wires directly to the Pico because it will be extremely difficult to troubleshoot wiring issues while debugging code.
+I strongly suggest soldering the wires directly to the Pico because it will be extremely difficult to troubleshoot wiring issues while debugging code.  Also make sure you are connecting to the DATA_IN connection (on my board it is on the left). 
 
 Using this diagram connect the wires as follows:
 ![](<Additional Resources/HUB75 Ribbon Pinout.jpg> "HUB75 Ribbion Wiring")
+Some LED Matricies are slightly different so you may have to adjust if you didn't buy the same one as in the link above.
 
 | Number | Input              | Pico GPIO Pin |
 |--------|--------------------|---------------|
@@ -56,8 +57,20 @@ Using this diagram connect the wires as follows:
 | 14     | B1                 | GP2           |
 | 15     | G1                 | GP1           |
 | 16     | R1                 | GP0           |
+
 You don't use the E input so I just capped off the wire.
 ### LED Matrix to Power Supply
 Connect the power cable to a barrel jack adapter (Red to + & Black to -) and then to a power supply (or directly to the power supply if you're fancy like that).
 
+# Programming the Matrix
+
+## Copy the necessary files
+
+Now you are all set up and ready to start programming the LED Matrix!
+
+1. Connect the Pico to your computer with the Micro USB cable. It will appear as a removable drive called CIRCUITPY
+2. Download this repository and copy over all the contents from the `src` directory to the CIRCUITPY drive
+3. Rename the `secrets_example.py` file to `secrets.py`
+4. Open `secrets.py` and update the credentials to yours
+5. Save all project files. The Pico will automatically detect once you save those updates and run them
 
