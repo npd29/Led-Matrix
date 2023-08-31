@@ -1,3 +1,4 @@
 /build/*
 !/build/*.uf2
 !/build/*.elf
+!/Circuit Python/secrets.py
