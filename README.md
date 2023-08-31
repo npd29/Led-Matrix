@@ -33,7 +33,7 @@ Future features I'm planning to add soon:
 I strongly suggest soldering the wires directly to the Pico because it will be extremely difficult to troubleshoot wiring issues while debugging code.
 
 Using this diagram connect the wires as follows:
-![](Additional Resources/HUB75 Ribbon Pinout.jpg?raw=true "HUB75 Ribbion Wiring")
+![](<Additional Resources/HUB75 Ribbon Pinout.jpg> "HUB75 Ribbion Wiring")
 
 | Number | Input              | Pico GPIO Pin |
 |--------|--------------------|---------------|
