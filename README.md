@@ -1,5 +1,14 @@
 # Tidbyt-Inspired LED Matrix
 Inspired by a very targeted ad promoting the [Tidbyt](https://tidbyt.com), I created my own using an LED Matrix and a Raspberry Pi Pico W.
+I had a difficult time finding a proper tutorial explaining aspects of this project like the HUB75 transfer protocol or how to connect the jumpers so I'm putting it all in one place here.
+
+I tried it in C++ to have a bit more control over everything as well as improve refresh rate but ran into a few issues (mostly because a lot of the tutorials were in C which I haven't yet learned). I'm planning on coming back to the C/C++ version but for now it's just CircuitPython.
+
+Future features I'm planning to add soon:
+- DHT22 Temperature/Humidity Sensor
+- On/Off Button
+
+# Setup
 
 ## Supplies
 - [ ] [64x32 LED Matrix](https://www.amazon.com/Full-Color-Raspberry-Displaying-Adjustable-Brightness/dp/B0B3W1PFY6?th=1)
@@ -8,6 +17,14 @@ Inspired by a very targeted ad promoting the [Tidbyt](https://tidbyt.com), I cre
 - [ ] Data Transfer Micro USB
 - [ ] 5V Power Supply (I used 5V/2A)
 - [ ] Jumper Wires
+
+## Install CircuitPython
+1. Go to the [CircuitPython download page](https://circuitpython.org/board/raspberry_pi_pico_w/) and download the latest CircuitPython firmware for the Raspberry Pi Pico.
+2. Connect your Pico to your computer using a USB cable.
+3. Press and hold the BOOTSEL button on your Pico, then plug the USB cable into your computer. Continue to hold the BOOTSEL button until the drive named RPI-RP2 appears on your computer.
+4. Drag and drop the CircuitPython firmware file onto the RPI-RP2 drive.
+5. Wait for the file transfer to complete, then eject the RPI-RP2 drive.
+6. The Raspberry Pi Pico will reboot and CircuitPython should be installed.
 
 ## Wiring
 
