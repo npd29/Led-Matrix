@@ -4,6 +4,9 @@ I had a difficult time finding a proper tutorial explaining aspects of this proj
 
 I tried it in C++ to have a bit more control over everything as well as improve refresh rate but ran into a few issues (mostly because a lot of the tutorials were in C which I haven't yet learned). I'm planning on coming back to the C/C++ version but for now it's just CircuitPython.
 
+I tried to write this tutorial to be beginner-friendly and address all the issues I ran into but if you have any questions feel free to reach out.
+
+
 Future features I'm planning to add soon:
 - DHT22 Temperature/Humidity Sensor
 - On/Off Button
