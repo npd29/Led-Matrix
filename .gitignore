@@ -1,4 +1,4 @@
-/build/*
+/C++/build/pioasm/pioasm
 !/build/*.uf2
 !/build/*.elf
 !/Circuit Python/secrets.py
