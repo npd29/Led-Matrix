@@ -1,15 +1,9 @@
-# This project is my attempt at building a simple, cheap, and super cool retro style display!
-# I wanted to copy the Tidbyt displays (which I think are awesome and totally worth the price), but I wanted to see how
-# cheap I could make it.
-#
-# It is designed for a Raspberry Pi Pico W, which means it is bare-boned by necessity. The pico doesn't have much space
-# for fancy libraries or anything, so I had to do several things the hard way.
-
-
 import time
 import board
 import displayio
 import framebufferio
+import wifi
+
 
 from displayManager import DisplayManager
 from analytics import YouTubeAnalytics
@@ -48,15 +42,31 @@ matrix = RGBMatrix(
 display = framebufferio.FramebufferDisplay(matrix, auto_refresh=True)
 
 display_system = DisplayManager(display)
-youtubeAnalytics = YouTubeAnalytics(secrets)
+# youtubeAnalytics = YouTubeAnalytics(secrets)
 
 display_system.display_logo()
 
-# Update every 10 minutes (let's be honest I don't get that many new subs...)
 recheck_delay = 600
 last_recheck = 0
 
+
+matrix.fill(0)
+
+
+
 while True:
+
+    wifi_ssid = secrets['ssid']
+    wifi_pass = secrets['password']
+
+    # Connect to Wi-Fi
+    while not wifi.radio.ipv4_address:
+        try:
+            wifi.radio.connect(self._wifi_ssid, self._wifi_pass)
+        except ConnectionError as e:
+            print("Connection Error:", e)
+        time.sleep(10)
+        gc.collect()
     if time.time() - last_recheck > recheck_delay:
         # Blocking call which returns when the get_analytics() http request is done
         # Tried async, but not enough room on pico

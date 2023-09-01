@@ -6,9 +6,11 @@ import displayio
 import adafruit_display_text.label
 from adafruit_display_text.scrolling_label import ScrollingLabel
 
+# for help visit: https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-a-bitmap
+
 
 def get_logo(x, y):
-    logo_bitmap, logo_palette = adafruit_imageload.load("/modHobbyist.bmp",
+    logo_bitmap, logo_palette = adafruit_imageload.load("/NDLogo-24.bmp",
                                                         bitmap=displayio.Bitmap,
                                                         palette=displayio.Palette)
     logo_palette[1] = 0x0000FF
@@ -28,7 +30,7 @@ def get_youtube_logo(x, y):
 
 def convert_subs_to_text(sub_count):
     # if sub_count % 1000 > 0:
-    # TODO make this programmatic\
+    # TODO make this programmatic
     units = ['', 'K', 'M']
     k = 1000.0
     magnitude = int(floor(log(int(sub_count), k)))
