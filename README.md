@@ -79,6 +79,6 @@ Now you are all set up and ready to start programming the LED Matrix!
 
 *Thanks to [Modern Hobbyist](https://github.com/modern-hobbyist/modern-retro-display/tree/main) for his project which I found incredibly useful while creating this.*
 
-# Additional Resourses
+# Additional Resources
 - [Memory Management](https://learn.adafruit.com/Memory-saving-tips-for-CircuitPython?view=all)
 - [displayio Library](https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-a-bitmap)

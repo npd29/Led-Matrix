@@ -54,7 +54,7 @@ while not wifi.radio.ipv4_address:
 gc.collect()  # call garbage collector to free up memory
 
 splash = displayio.Group(max_size=10)
-display.show(splash)
+display_system.show(splash)
 color_bitmap = displayio.Bitmap(64, 32, 1)
 color_palette = displayio.Palette(1)
 color_palette[0] = 0x00FF00  # Bright Green
@@ -62,6 +62,7 @@ bg_sprite = displayio.TileGrid(color_bitmap,
                                pixel_shader=color_palette,
                                x=0, y=0)
 splash.append(bg_sprite)
-
+time.sleep(10)
+display_system.display_time()
 while True:
     pass

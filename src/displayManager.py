@@ -2,10 +2,10 @@ from math import floor, log
 
 import adafruit_imageload
 import terminalio
-import displayio # for help with displayio visit: https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-a-bitmap
+import displayio
 import secrets
-from time import localtime
-import adafruit_display_text.label
+from time import localtime, strftime
+from adafruit_display_text import label
 from adafruit_display_text.scrolling_label import ScrollingLabel
 
 
@@ -20,15 +20,24 @@ def get_logo(x, y):
     return displayio.TileGrid(logo_bitmap, pixel_shader=logo_palette, x=x, y=y)
 
 def get_time():
+    font = terminalio.FONT
     group = displayio.Group()
-    time_label = Label(font, text="", color=0xFFFFFF)
+    time_label = label.Label(font, text="", color=0xFFFFFF)
     time_label.x = 10
     time_label.y = 10
 
     group.append(time_label)
     current_time = localtime()
-    formatted_time = time.strftime("%H:%M:%S", current_time)
+    formatted_time = strftime("%H:%M:%S", current_time)
 
+def test_text():
+    text = "HELLO WORLD"
+    font = terminalio.FONT
+    color = 0x0000FF
+    text_area = label.Label(font, text=text, color=color)
+    text_area.x = 10
+    text_area.y = 10
+    return text_area
 
 class DisplayManager(displayio.Group):
     def __init__(self, display):
@@ -74,3 +83,10 @@ class DisplayManager(displayio.Group):
         self.loading_screen.append(group)
 
         self.display.show(self.loading_screen)
+
+    def display_time(self):
+        self.display.show(get_time())
+
+    def show(self, group):
+        self.display.show(group)
+
