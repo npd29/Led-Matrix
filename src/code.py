@@ -1,12 +1,11 @@
+import gc
 import time
 import board
 import displayio
-import framebufferio
+import framebufferio as fb
 import wifi
 
-
 from displayManager import DisplayManager
-from analytics import YouTubeAnalytics
 
 from rgbmatrix import RGBMatrix
 
@@ -29,6 +28,7 @@ height_value = base_height * tile_down
 
 displayio.release_displays()
 
+# If you connected the pins to different ports then you will have to adjust these
 matrix = RGBMatrix(
     width=width_value, height=height_value, bit_depth=bit_depth_value,
     rgb_pins=[board.GP0, board.GP1, board.GP2, board.GP3, board.GP4, board.GP5],
@@ -39,39 +39,29 @@ matrix = RGBMatrix(
 )
 
 # Associate the RGB matrix with a Display so that we can use displayio features
-display = framebufferio.FramebufferDisplay(matrix, auto_refresh=True)
+display = fb.FramebufferDisplay(matrix, auto_refresh=True)
 
-display_system = DisplayManager(display)
-# youtubeAnalytics = YouTubeAnalytics(secrets)
+display_system = DisplayManager(display)  # show logo on startup
 
-display_system.display_logo()
+# Connect to Wi-Fi
+while not wifi.radio.ipv4_address:
+    try:
+        wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
+    except ConnectionError as e:
+        print("Connection Error:", e)
+    time.sleep(10)
 
-recheck_delay = 600
-last_recheck = 0
+gc.collect()  # call garbage collector to free up memory
 
-
-matrix.fill(0)
-
-
+splash = displayio.Group(max_size=10)
+display.show(splash)
+color_bitmap = displayio.Bitmap(64, 32, 1)
+color_palette = displayio.Palette(1)
+color_palette[0] = 0x00FF00  # Bright Green
+bg_sprite = displayio.TileGrid(color_bitmap,
+                               pixel_shader=color_palette,
+                               x=0, y=0)
+splash.append(bg_sprite)
 
 while True:
-
-    wifi_ssid = secrets['ssid']
-    wifi_pass = secrets['password']
-
-    # Connect to Wi-Fi
-    while not wifi.radio.ipv4_address:
-        try:
-            wifi.radio.connect(self._wifi_ssid, self._wifi_pass)
-        except ConnectionError as e:
-            print("Connection Error:", e)
-        time.sleep(10)
-        gc.collect()
-    if time.time() - last_recheck > recheck_delay:
-        # Blocking call which returns when the get_analytics() http request is done
-        # Tried async, but not enough room on pico
-        sub_count = youtubeAnalytics.get_analytics()
-        display_system.update_sub_count(sub_count)
-        last_recheck = time.time()
-
-    display_system.update()
+    pass

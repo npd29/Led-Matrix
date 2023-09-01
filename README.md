@@ -8,7 +8,7 @@ I tried to write this tutorial to be beginner-friendly and address all the issue
 
 
 Future features I'm planning to add soon:
-- DHT22 Temperature/Humidity Sensor
+- DHT22 Temperature/Humidity Sensor integration
 - On/Off Button
 
 # Setup
@@ -74,3 +74,11 @@ Now you are all set up and ready to start programming the LED Matrix!
 4. Open `secrets.py` and update the credentials to yours
 5. Save all project files. The Pico will automatically detect once you save those updates and run them
 
+
+
+
+*Thanks to [Modern Hobbyist](https://github.com/modern-hobbyist/modern-retro-display/tree/main) for his project which I found incredibly useful while creating this.*
+
+# Additional Resourses
+- [Memory Management](https://learn.adafruit.com/Memory-saving-tips-for-CircuitPython?view=all)
+- [displayio Library](https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-a-bitmap)
