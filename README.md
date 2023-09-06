@@ -81,4 +81,4 @@ Now you are all set up and ready to start programming the LED Matrix!
 
 # Additional Resources
 - [Memory Management](https://learn.adafruit.com/Memory-saving-tips-for-CircuitPython?view=all)
-- [displayio Library](https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-a-bitmap)
+- [displayio Library](https://learn.adafruit.com/circuitpython-display-support-using-displayio?view=all)

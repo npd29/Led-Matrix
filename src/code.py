@@ -1,68 +1,115 @@
 import gc
 import time
+import adafruit_display_text.label
 import board
 import displayio
-import framebufferio as fb
+import framebufferio
+import rgbmatrix
+import terminalio
 import wifi
-
+from adafruit_imageload import load
+import secrets
 from displayManager import DisplayManager
+from digitalio import DigitalInOut, Direction
+import socketpool
+import adafruit_ntp
+import rtc
 
-from rgbmatrix import RGBMatrix
-
-# Get wifi details and more from a secrets.py file
-try:
-    from secrets import secrets
-except ImportError:
-    print("WiFi secrets are kept in secrets.py, please add them there!")
-    raise
-
-bit_depth_value = 1
-base_width = 64
-base_height = 32
-chain_across = 1
-tile_down = 1
-serpentine_value = True
-
-width_value = base_width * chain_across
-height_value = base_height * tile_down
+led = DigitalInOut(board.LED)
+led.direction = Direction.OUTPUT
+led.value = False
 
 displayio.release_displays()
-
-# If you connected the pins to different ports then you will have to adjust these
-matrix = RGBMatrix(
-    width=width_value, height=height_value, bit_depth=bit_depth_value,
-    rgb_pins=[board.GP0, board.GP1, board.GP2, board.GP3, board.GP4, board.GP5],
+matrix = rgbmatrix.RGBMatrix(
+    width=64, height=32, bit_depth=6, rgb_pins=[board.GP0, board.GP1, board.GP2, board.GP3, board.GP4, board.GP5],
     addr_pins=[board.GP6, board.GP7, board.GP8, board.GP9],
-    clock_pin=board.GP10, latch_pin=board.GP12, output_enable_pin=board.GP13,
-    tile=tile_down, serpentine=serpentine_value,
-    doublebuffer=True,
-)
+    clock_pin=board.GP10, latch_pin=board.GP12, output_enable_pin=board.GP13)
 
 # Associate the RGB matrix with a Display so that we can use displayio features
-display = fb.FramebufferDisplay(matrix, auto_refresh=True)
+display = framebufferio.FramebufferDisplay(matrix, auto_refresh=False, rotation=0)
 
-display_system = DisplayManager(display)  # show logo on startup
+#
+# scroll_text = adafruit_display_text.label.Label(
+#     terminalio.FONT,
+#     color=0x0080ff,
+#     text="Testing scrolling text")
+# scroll_text.x = display.width
+# scroll_text.y = 24
 
-# Connect to Wi-Fi
+# Put each line of text into a Group, then show that group.
+# g = displayio.Group()
+# g.append(scroll_text)
+# display.show(g)
+
+gc.collect()
+manager = DisplayManager(display)
+manager.display_logo()
+gc.collect()
+
+# logo_bitmap, logo_palette = load(secrets.LOGO_PATH,
+#                                  bitmap=displayio.Bitmap,
+#                                  palette=displayio.Palette)
+# logo_palette[1] = 0x000000
+#
+# TILEGRID = displayio.TileGrid(bitmap=logo_bitmap,
+#                               pixel_shader=logo_palette,
+#                               x=32-logo_bitmap.width//2,
+#                               y=16-logo_bitmap.height//2)
+# for optimization?
+# BITMAP = displayio.OnDiskBitmap(FILENAME)
+# PALETTE = BITMAP.pixel_shader
+# TILEGRID = displayio.TileGrid(
+#     BITMAP,
+#     pixel_shader=PALETTE,
+#     tile_width=BITMAP.width,
+#     tile_height=BITMAP.height)
+
+# GROUP = displayio.Group(scale=1)
+# GROUP.append(TILEGRID)
+#
+# display.show(GROUP)
+display.refresh()
+
 while not wifi.radio.ipv4_address:
     try:
         wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
     except ConnectionError as e:
-        print("Connection Error:", e)
+        print("Conn Error:", e)
+    print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
     time.sleep(10)
+# set RTC
+pool = socketpool.SocketPool(wifi.radio)
+ntp = adafruit_ntp.NTP(pool, tz_offset=0)
+rtc.RTC().datetime = ntp.datetime
+gc.collect()
+display.refresh()
+manager.display_time()
+display.refresh()
 
-gc.collect()  # call garbage collector to free up memory
 
-splash = displayio.Group(max_size=10)
-display_system.show(splash)
-color_bitmap = displayio.Bitmap(64, 32, 1)
-color_palette = displayio.Palette(1)
-color_palette[0] = 0x00FF00  # Bright Green
-bg_sprite = displayio.TileGrid(color_bitmap,
-                               pixel_shader=color_palette,
-                               x=0, y=0)
-splash.append(bg_sprite)
-time.sleep(10)
-display_system.display_time()
+
+# frame = Rect(0,0,64,32, fill=0x00FF00)  # Green color (0x00FF00)
+# connected = displayio.Group(scale=1)
+# connected.append(frame)
+# # connected.append(TILEGRID)
+# display.show(connected)
+# display.refresh()
+
+
+gc.collect()
+
+
+# display.show(None)
+# scroll(line2)
+# display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+
 while True:
+    # set brightness
+
+    # indicate wifi connection
+    if wifi.radio.ipv4_address:
+        led.value = True
+    else:
+        led.value = False
+
     pass

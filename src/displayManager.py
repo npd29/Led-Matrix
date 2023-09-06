@@ -1,34 +1,25 @@
+import time
 from math import floor, log
 
 import adafruit_imageload
 import terminalio
 import displayio
 import secrets
-from time import localtime, strftime
+from time import localtime
 from adafruit_display_text import label
 from adafruit_display_text.scrolling_label import ScrollingLabel
 
 
-
-def get_logo(x, y):
+def get_logo()->displayio.Group:
     logo_bitmap, logo_palette = adafruit_imageload.load(secrets.LOGO_PATH,
                                                         bitmap=displayio.Bitmap,
                                                         palette=displayio.Palette)
-    logo_palette[1] = 0x0000FF
+    logo_palette[1] = 0x000000
+
     logo_palette.make_transparent(0)
 
-    return displayio.TileGrid(logo_bitmap, pixel_shader=logo_palette, x=x, y=y)
+    return add_center(displayio.TileGrid(logo_bitmap, pixel_shader=logo_palette))
 
-def get_time():
-    font = terminalio.FONT
-    group = displayio.Group()
-    time_label = label.Label(font, text="", color=0xFFFFFF)
-    time_label.x = 10
-    time_label.y = 10
-
-    group.append(time_label)
-    current_time = localtime()
-    formatted_time = strftime("%H:%M:%S", current_time)
 
 def test_text():
     text = "HELLO WORLD"
@@ -39,54 +30,66 @@ def test_text():
     text_area.y = 10
     return text_area
 
+
+def scroll(line, display):
+    line.x = line.x - 1
+    line_width = line.bounding_box[2]
+    if line.x < -line_width:
+        line.x = display.width
+
+
+def reverse_scroll(line, display):
+    line.x = line.x + 1
+    line_width = line.bounding_box[2]
+    if line.x >= display.width:
+        line.x = -line_width
+
+
+def get_current_time() -> displayio.Group:
+    formatted_time = str(localtime()[3]) + ":" + str(localtime()[4])
+    font = terminalio.FONT
+    text_area = label.Label(font, text=formatted_time, color=0xFFFFFF)
+    text_area.x = secrets.WIDTH // 2 - text_area.width // 2
+    text_area.y = secrets.HEIGHT // 2 - text_area.height // 2
+    _group = displayio.Group()
+    _group.append(text_area)
+    return _group
+
+
+def add_center(item: displayio.Bitmap | displayio.TileGrid) -> displayio.Group:
+    _group = displayio.Group()
+    item.x = secrets.WIDTH // 2 - item.width // 2
+    item.y = item.height // 2
+    _group.append(item)
+    return _group
+
+
 class DisplayManager(displayio.Group):
     def __init__(self, display):
         super().__init__()
         display.rotation = 0
         self.display = display
-        self._first_enter_page = True
-        self.my_logo = get_logo(0, 0)
-        # self.loading_group = displayio.Group()
-        # self._scrolling_label = ScrollingLabel(terminalio.FONT, text="subscribers", max_characters=11, animate_time=0.3,
-        #                                        color=0x00FFFF)
-        #
-        # self._scrolling_label.x = 0
-        # self._scrolling_label.y = 25
-        # line1 = adafruit_display_text.label.Label(terminalio.FONT, color=0x0000CC)
+        self.logo = get_logo()
+        self.current_time = get_current_time()
 
-        # self._line1 = line1
-        # self._line1.text = " "
-
-        self.loading_screen = displayio.Group()
-        self.loading_screen.append(self.my_logo)
-        # self._line_group.append(self)
-        self.append(self.loading_screen)
-        # self.append(self._scrolling_label)
-
-        display.show(self.loading_screen)
+    def add_text(self, text: str, x: int, y: int, color: int = 0xFFFFFF):
+        font = terminalio.FONT
+        text_area = label.Label(font, text=text, color=color)
+        text_area.x = x
+        text_area.y = y
+        self.group.append(text_area)
+        self.display.show(self.group)
 
     def update(self):
         pass
         # self._scrolling_label.update()
 
-    def display_logo(self):
-        tile_grid = get_logo(1, 2)
-        # youtube_tile_grid = get_youtube_logo(51, 9)
-        group = displayio.Group()
-
-        # self._line1.x = 19
-        # self._line1.y = 12
-
-        group.append(tile_grid)
-        # group.append(youtube_tile_grid)
-
-        self.loading_screen.append(group)
-
-        self.display.show(self.loading_screen)
-
-    def display_time(self):
-        self.display.show(get_time())
-
     def show(self, group):
         self.display.show(group)
 
+    def display_logo(self):
+        self.display.show(self.logo)
+
+    def display_time(self):
+        self.logo.hidden = True
+        self.display.show(self.current_time)
