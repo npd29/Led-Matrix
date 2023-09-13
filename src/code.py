@@ -1,24 +1,16 @@
-import gc
+import gc  # garbage collection
 import time
-import adafruit_display_text.label
-import board
+
+import board  # board for LED
 import displayio
 import framebufferio
 import rgbmatrix
-import terminalio
 import wifi
-from adafruit_imageload import load
-import secrets
-from displayManager import DisplayManager
-from digitalio import DigitalInOut, Direction
-import socketpool
-import adafruit_ntp
-import rtc
+from digitalio import DigitalInOut, Direction  # digital input/output for LED
 
-led = DigitalInOut(board.LED)
-led.direction = Direction.OUTPUT
-led.value = False
+from displayManager import DisplayManager  # manage display
 
+# set up display
 displayio.release_displays()
 matrix = rgbmatrix.RGBMatrix(
     width=64, height=32, bit_depth=6, rgb_pins=[board.GP0, board.GP1, board.GP2, board.GP3, board.GP4, board.GP5],
@@ -27,6 +19,11 @@ matrix = rgbmatrix.RGBMatrix(
 
 # Associate the RGB matrix with a Display so that we can use displayio features
 display = framebufferio.FramebufferDisplay(matrix, auto_refresh=False, rotation=0)
+
+# set up LED for wifi connection indicator
+led = DigitalInOut(board.LED)
+led.direction = Direction.OUTPUT
+led.value = False
 
 #
 # scroll_text = adafruit_display_text.label.Label(
@@ -41,9 +38,11 @@ display = framebufferio.FramebufferDisplay(matrix, auto_refresh=False, rotation=
 # g.append(scroll_text)
 # display.show(g)
 
-gc.collect()
-manager = DisplayManager(display)
-manager.display_logo()
+# set up display manager and display logo
+manager = DisplayManager(display, led)
+display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
+manager.setup()
+# manager.display_weather()
 gc.collect()
 
 # logo_bitmap, logo_palette = load(secrets.LOGO_PATH,
@@ -68,25 +67,6 @@ gc.collect()
 # GROUP.append(TILEGRID)
 #
 # display.show(GROUP)
-display.refresh()
-
-while not wifi.radio.ipv4_address:
-    try:
-        wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
-    except ConnectionError as e:
-        print("Conn Error:", e)
-    print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
-    time.sleep(10)
-# set RTC
-pool = socketpool.SocketPool(wifi.radio)
-ntp = adafruit_ntp.NTP(pool, tz_offset=0)
-rtc.RTC().datetime = ntp.datetime
-gc.collect()
-display.refresh()
-manager.display_time()
-display.refresh()
-
-
 
 # frame = Rect(0,0,64,32, fill=0x00FF00)  # Green color (0x00FF00)
 # connected = displayio.Group(scale=1)
@@ -95,21 +75,22 @@ display.refresh()
 # display.show(connected)
 # display.refresh()
 
-
-gc.collect()
-
-
 # display.show(None)
 # scroll(line2)
 # display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
 
-while True:
-    # set brightness
+print("entering loop!")
 
+while True:
+
+    # manager.display_time()
+    manager.display_time()
     # indicate wifi connection
     if wifi.radio.ipv4_address:
         led.value = True
     else:
         led.value = False
-
-    pass
+    # time.monotonic()
+    # if not manager.current_time.hidden:
+    #     manager.update_time()
+    display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
