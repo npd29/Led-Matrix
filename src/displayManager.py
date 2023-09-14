@@ -1,3 +1,4 @@
+import random
 import ssl
 from math import floor, log
 
@@ -48,7 +49,7 @@ def connect_to_wifi(led):
             print("Unexpected error with syncing RTC")
             print(e)
     else:
-        rtc.RTC().datetime = struct_time((2023, 9, 13, 19, 13, 15, 0, -1, -1))
+        rtc.RTC().datetime = struct_time((2023, 9, 13, 20, 12, 45, 0, -1, -1))
 
     gc.collect()
 
@@ -95,36 +96,39 @@ def reverse_scroll(line, display):
 
 def get_current_time():
     scale = 1
-    am = True
+    am_pm = "AM"
     # convert UTC hour to EST and from 24 to 12hr
-    if rtc.RTC().datetime[3] > 12:
-        am = False
-    hour = (rtc.RTC().datetime[3] - 4) % 12
+    if localtime()[3] > 12:
+        am_pm = "PM"
+    hour = (localtime()[3] - 4) % 12
     if hour == 0:
         hour = 12
-    formatted_time = str(hour) + ":" + str(rtc.RTC().datetime[4])
-    font = bitmap_font.load_font("/Helvetica-Bold-16.bdf")
+    if localtime()[4] < 10:
+        minute = "0" + str(localtime()[4])
+    else:
+        minute = localtime()[4]
+    formatted_time = str(hour) + ":" + str(minute)
     # text_area.background_color = 0x000508
     layout = GridLayout(
         x=2,
         y=1,
         width=60,
         height=30,
-        grid_size=(2, 3),
+        grid_size=(4, 6),
         cell_padding=0,
         divider_lines=False,  # divider lines around every cell
     )
     _labels = [label.Label(
-        bitmap_font.load_font("/Helvetica-Bold-16.bdf"), scale=1, x=0, y=0, text=formatted_time, color=secrets.CYAN,
+        bitmap_font.load_font("/Helvetica-Bold-16.bdf"), scale=1, x=0, y=0, text=formatted_time, color=secrets.WHITE
     )]
 
-    layout.add_content(_labels[0], grid_position=(0, 0), cell_size=(1, 2), cell_anchor_point=(0.5, 0.5))
-    # _labels.append(
-    #     label.Label(
-    #         terminalio.FONT, scale=1, x=0, y=0, text="", background_color=0x007700
-    #     )
-    # )
-    # layout.add_content(_labels[1], grid_position=(1, 0), cell_size=(1, 1))
+    layout.add_content(_labels[0], grid_position=(0, 0), cell_size=(3, 4), cell_anchor_point=(1, 0.5))
+    _labels.append(
+        label.Label(
+            terminalio.FONT, scale=1, x=0, y=0, text=am_pm, color=secrets.WHITE
+        )
+    )
+    layout.add_content(_labels[1], grid_position=(3, 0), cell_size=(1, 1), cell_anchor_point=(1, 0))
     # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="DESMARAIS", color=secrets.PINK))
     # layout.add_content(_labels[2], grid_position=(0, 1), cell_size=(1, 1))
     # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="", color=0xFF0000))
@@ -188,12 +192,48 @@ class DisplayManager(displayio.Group):
         self.current_time = None
         self.weather = None
         self.led = led
+        self.bitmap = None
+        self.palette = None
+        self.animation_col = 0
+        self.animation_color = 0
 
     def setup(self):
-        self.current_time = get_current_time()
         connect_to_wifi(self.led)
+        self.current_time = get_current_time()
         self.weather = create_layout()
+        self.bitmap = displayio.Bitmap(secrets.WIDTH, secrets.HEIGHT, 21)
+        self.palette = displayio.Palette(21)
+        self.palette[0] = 0x1F00FF
+        self.palette[1] = 0x1130DF
+        self.palette[2] = 0x5E60CE
+        self.palette[3] = 0x5390D9
+        self.palette[4] = 0x4EA8DE
+        self.palette[5] = 0x48BFE3
+        self.palette[6] = 0x56CFE1
+        self.palette[7] = 0x72FF9A
+        self.palette[8] = 0x60FF66
+        self.palette[9] = 0x20FF20
+
+
+        self.palette[10] = 0x60FF66
+        self.palette[11] = 0x72FF9A
+        self.palette[12] = 0x72EFDD
+        self.palette[13] = 0x64DFDF
+        self.palette[14] = 0x56CFE1
+        self.palette[15] = 0x48BFE3
+        self.palette[16] = 0x4EA8DE
+        self.palette[17] = 0x5390D9
+        self.palette[18] = 0x5E60CE
+        self.palette[19] = 0x1130DF
+
+        self.palette[20] = 0x000000
+
+        for col in range(secrets.WIDTH):
+            for row in range(secrets.HEIGHT):
+                self.bitmap[col, row] = 12
+
         self.is_setup = True
+
 
     def add_text(self, text: str, x: int, y: int, color: int = 0xFFFFFF):
         font = terminalio.FONT
@@ -230,8 +270,19 @@ class DisplayManager(displayio.Group):
     def update_time(self):
         self.current_time = get_current_time()
 
+    def display_animation(self):
+        tile_grid = displayio.TileGrid(self.bitmap, pixel_shader=self.palette)
+        group = displayio.Group()
+        group.append(tile_grid)
+        self.display.show(group)
 
-class Weather():
+        self.animation_col = (self.animation_col + 1) % secrets.WIDTH
+        self.animation_color = (self.animation_color + 1) % (len(self.palette)-1)
+        for row in range(secrets.HEIGHT):
+            self.bitmap[self.animation_col, row] = self.animation_color
+
+
+class Weather:
     def __init__(self):
         self.pool = socketpool.SocketPool(wifi.radio)
         self.requests = adafruit_requests.Session(self.pool, ssl.create_default_context())

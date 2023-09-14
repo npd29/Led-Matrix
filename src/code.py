@@ -6,7 +6,8 @@ import displayio
 import framebufferio
 import rgbmatrix
 import wifi
-from digitalio import DigitalInOut, Direction  # digital input/output for LED
+from digitalio import DigitalInOut, Direction, Pull  # digital input/output for LED
+from rtc import RTC
 
 from displayManager import DisplayManager  # manage display
 
@@ -24,6 +25,10 @@ display = framebufferio.FramebufferDisplay(matrix, auto_refresh=False, rotation=
 led = DigitalInOut(board.LED)
 led.direction = Direction.OUTPUT
 led.value = False
+
+button = DigitalInOut(board.GP14)
+button.direction = Direction.INPUT
+button.pull = Pull.DOWN
 
 #
 # scroll_text = adafruit_display_text.label.Label(
@@ -80,16 +85,34 @@ gc.collect()
 # display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
 
 print("entering loop!")
-
+displayScreen = 0
+prev_time = time.monotonic()
+pause = .5
 while True:
 
     # manager.display_time()
-    manager.display_time()
+    if time.monotonic() - prev_time >= pause and button.value:
+        displayScreen += 1
+        displayScreen %= 3
+        prev_time = time.monotonic()
+
+    # loop through screens when button is pushed
+    if displayScreen == 0:
+        manager.display_weather()
+    elif displayScreen == 1:
+        manager.display_time()
+    else:
+        manager.display_animation()
+
     # indicate wifi connection
     if wifi.radio.ipv4_address:
         led.value = True
     else:
         led.value = False
+
+    if time.localtime()[5] == 0:
+        manager.update_time()
+
     # time.monotonic()
     # if not manager.current_time.hidden:
     #     manager.update_time()
