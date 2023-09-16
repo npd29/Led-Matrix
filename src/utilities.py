@@ -16,3 +16,4 @@ def convert_brightness(color: str, brightness: float) -> int:
     for i in range(len(rgb_color)):
         rgb_color[i] = int(rgb_color[i] * brightness)
     return int(rgb_to_hex(rgb_color[0], rgb_color[1], rgb_color[2]))
+
