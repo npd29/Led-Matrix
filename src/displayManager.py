@@ -19,23 +19,25 @@ import gc  # garbage collection
 from board import LED  # board for LED
 from utilities import convert_brightness
 from adafruit_displayio_layout.layouts.grid_layout import GridLayout
+from adafruit_displayio_layout.widgets.icon_widget import IconWidget
 import adafruit_requests
 import constants as c
+from rect import Rect
 
 brightness = 0.5
 
 
 def connect_to_wifi(led):
     count = 0
-    while not wifi.radio.ipv4_address and count < 1:
-        try:
-            wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
-            print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
-        except ConnectionError as e:
-            print("Conn Error:", e)
-        sleep(1)
-        print(count)
-        count += 1
+    # while not wifi.radio.ipv4_address and count < 1:
+    #     try:
+    #         wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
+    #         print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
+    #     except ConnectionError as e:
+    #         print("Conn Error:", e)
+    #     sleep(1)
+    #     print(count)
+    #     count += 1
     # set RTC
     if wifi.radio.ipv4_address:
         try:
@@ -50,21 +52,16 @@ def connect_to_wifi(led):
             print("Unexpected error with syncing RTC")
             print(e)
     else:
-        rtc.RTC().datetime = struct_time((2023, 9, 14, 16, 14, 0, 0, -1, -1))
+        rtc.RTC().datetime = struct_time((2023, 9, 14, 14, 57, 0, 0, -1, -1))
 
     gc.collect()
-
-
-def get_weather():
-    pass
-    # using Wi-Fi call weather api
 
 
 def get_logo() -> displayio.Group:
     logo_bitmap, logo_palette = adafruit_imageload.load(c.LOGO_PATH,
                                                         bitmap=displayio.Bitmap,
                                                         palette=displayio.Palette)
-    logo_palette[1] = convert_brightness("0xFFFFFF", brightness)
+    logo_palette[1] = c.DK_GREY
 
     logo_palette.make_transparent(0)
 
@@ -96,7 +93,7 @@ def reverse_scroll(line, display):
 
 
 def get_current_time():
-    scale = 1
+    square = Rect(x=0, y=0, width=64, height=7, fill=c.INDIGO)
     am_pm = "AM"
     # convert UTC hour to EST and from 24 to 12hr
     if localtime()[3] > 12:
@@ -109,31 +106,46 @@ def get_current_time():
     else:
         minute = localtime()[4]
     formatted_time = str(hour) + ":" + str(minute)
-    # text_area.background_color = 0x000508
     layout = GridLayout(
-        x=2,
-        y=1,
-        width=60,
-        height=30,
-        grid_size=(4, 6),
+        x=0,
+        y=0,
+        width=64,
+        height=32,
+        grid_size=(1, 3),
         cell_padding=0,
         divider_lines=False,  # divider lines around every cell
     )
+
     _labels = [label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=3, x=0, y=0, text=formatted_time, color=c.WHITE
+        bitmap_font.load_font("/fonts/BarlowCondensed-Medium-28.bdf"), scale=1, x=0, y=0, text=formatted_time,
+        color=c.GREY
     )]
 
-    layout.add_content(_labels[0], grid_position=(0, 0), cell_size=(3, 4), cell_anchor_point=(1, 0.5))
-    _labels.append(
-        label.Label(
-            terminalio.FONT, scale=1, x=0, y=0, text=am_pm, color=c.WHITE
-        )
+    layout.add_content(_labels[0], grid_position=(0, 0), cell_size=(1, 2), cell_anchor_point=(0.5, 1))
+    bottom = GridLayout(
+        x=0,
+        y=0,
+        width=64,
+        height=10,
+        grid_size=(2, 1),
+        cell_padding=0,
+        divider_lines=False  # divider lines around every cell
     )
-    layout.add_content(_labels[1], grid_position=(3, 0), cell_size=(1, 1), cell_anchor_point=(1, 0))
-    # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="DESMARAIS", color=c.PINK))
-    # layout.add_content(_labels[2], grid_position=(0, 1), cell_size=(1, 1))
-    # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="", color=0xFF0000))
-    # layout.add_content(_labels[3], grid_position=(1, 1), cell_size=(1, 1))
+    _bottom_labels = [
+        label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text=am_pm, color=c.BLACK
+        )
+        ,
+        label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="SEP 15",
+            color=c.BLACK
+        )
+    ]
+    bottom.add_content(_bottom_labels[0], grid_position=(0, 0), cell_size=(1, 1), cell_anchor_point=(0.1, 1))
+    bottom.add_content(_bottom_labels[1], grid_position=(1, 0), cell_size=(1, 1), cell_anchor_point=(.9, 1))
+    layout.add_content(square, grid_position=(0, 2), cell_size=(1, 1), cell_anchor_point=(0, 1))
+    layout.add_content(bottom, grid_position=(0, 2), cell_size=(1, 1), cell_anchor_point=(0, 0))
+
     group = displayio.Group()
     group.append(layout)
     return group
@@ -147,10 +159,11 @@ def add_center(item: displayio.Bitmap | displayio.TileGrid) -> displayio.Group:
     return _group
 
 
-def create_layout():
+def get_weather():
     # weather = Weather(03110)
     # high = weather.high
     # low = weather.low
+
     layout = GridLayout(
         x=0,
         y=0,
@@ -159,34 +172,60 @@ def create_layout():
         grid_size=(3, 5),
         cell_padding=0,
         divider_lines=False,  # divider lines around every cell
+        v_divider_line_cols=[1, 2],  # vertical divider lines between columns 1 and 2
+        divider_line_color=c.DK_GREY
     )
     _labels = [
         # next 3 days
         label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="MON", color=c.YELLOW,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="TUE", color=c.WHITE,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="WED", color=c.WHITE,
-    ),
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="MON", color=c.WHITE,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="TUE", color=c.WHITE,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="WED", color=c.WHITE,
+        ),
         # high temps
         label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="85", color=c.LT_ORANGE,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="76", color=c.LT_ORANGE,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="81", color=c.LT_ORANGE,
-    ),
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="85", color=c.YELLOW,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="76", color=c.YELLOW,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="81", color=c.YELLOW,
+        ),
         # low temps
         label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="72", color=c.LT_BLUE,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="68", color=c.LT_BLUE,
-    ), label.Label(
-        bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="74", color=c.LT_BLUE,
-    )
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="72", color=c.LT_GREY,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="68", color=c.LT_GREY,
+        ), label.Label(
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="74", color=c.LT_GREY,
+        )
     ]
+    sun = IconWidget(
+        "",
+        "/sun.bmp",
+        on_disk=True,
+        transparent_index=c.BLACK
+    )
+    cloudy = IconWidget(
+        "",
+        "/cloudy.bmp",
+        on_disk=True,
+        transparent_index=c.BLACK
+    )
+    clouds = IconWidget(
+        "",
+        "/thundershowers.bmp",
+        on_disk=True,
+        transparent_index=c.BLACK
+    )
+
+    layout.add_content(sun, grid_position=(0, 0), cell_size=(1, 2), cell_anchor_point=(0.5, 0.5))
+    layout.add_content(cloudy, grid_position=(1, 0), cell_size=(1, 2), cell_anchor_point=(0.5, 0.5))
+    layout.add_content(clouds, grid_position=(2, 0), cell_size=(1, 2), cell_anchor_point=(0.5, 0.5))
+
     # next 3 days
+
     layout.add_content(_labels[0], grid_position=(0, 2), cell_size=(1, 1), cell_anchor_point=(0.5, 0))
     layout.add_content(_labels[1], grid_position=(1, 2), cell_size=(1, 1), cell_anchor_point=(0.5, 0))
     layout.add_content(_labels[2], grid_position=(2, 2), cell_size=(1, 1), cell_anchor_point=(0.5, 0))
@@ -199,16 +238,6 @@ def create_layout():
     layout.add_content(_labels[7], grid_position=(1, 4), cell_size=(1, 1), cell_anchor_point=(0.5, 0.5))
     layout.add_content(_labels[8], grid_position=(2, 4), cell_size=(1, 1), cell_anchor_point=(0.5, 0.5))
 
-    # _labels.append(
-    #     label.Label(
-    #         terminalio.FONT, scale=1, x=0, y=0, text="", background_color=0x007700
-    #     )
-    # )
-    # layout.add_content(_labels[1], grid_position=(1, 0), cell_size=(1, 1))
-    # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="DESMARAIS", color=c.PINK))
-    # layout.add_content(_labels[2], grid_position=(0, 1), cell_size=(1, 1))
-    # _labels.append(label.Label(terminalio.FONT, scale=1, x=0, y=0, text="", color=0xFF0000))
-    # layout.add_content(_labels[3], grid_position=(1, 1), cell_size=(1, 1))
     group = displayio.Group()
     group.append(layout)
     return group
@@ -234,7 +263,7 @@ class DisplayManager(displayio.Group):
     def setup(self):
         connect_to_wifi(self.led)
         self.current_time = get_current_time()
-        self.weather = create_layout()
+        self.weather = get_weather()
         self.bitmap = displayio.Bitmap(c.WIDTH, c.HEIGHT, 21)
         self.palette = displayio.Palette(21)
         self.palette[0] = 0x1F00FF
