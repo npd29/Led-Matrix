@@ -23,24 +23,26 @@ from adafruit_displayio_layout.widgets.icon_widget import IconWidget
 import adafruit_requests
 import constants as c
 from rect import Rect
+import json
 
 brightness = 0.5
 
 
 def connect_to_wifi(led):
     count = 0
-    # while not wifi.radio.ipv4_address and count < 1:
-    #     try:
-    #         wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
-    #         print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
-    #     except ConnectionError as e:
-    #         print("Conn Error:", e)
-    #     sleep(1)
-    #     print(count)
-    #     count += 1
+    while not wifi.radio.ipv4_address and count < 1:
+        try:
+            wifi.radio.connect(secrets.SSID, secrets.PASSWORD)
+            print("Connected to", secrets.SSID, "\nIP Address:", wifi.radio.ipv4_address)
+        except ConnectionError as e:
+            print("Conn Error:", e)
+        sleep(1)
+        print(count)
+        count += 1
     # set RTC
     if wifi.radio.ipv4_address:
         try:
+            #temp
             pool = socketpool.SocketPool(wifi.radio)
             ntp = adafruit_ntp.NTP(pool, tz_offset=0)
             rtc.RTC().datetime = ntp.datetime
@@ -93,6 +95,7 @@ def reverse_scroll(line, display):
 
 
 def get_current_time():
+    date = c.MONTHS[localtime()[1]] + " " + str(localtime()[2])
     square = Rect(x=0, y=0, width=64, height=7, fill=c.INDIGO)
     am_pm = "AM"
     # convert UTC hour to EST and from 24 to 12hr
@@ -137,7 +140,7 @@ def get_current_time():
         )
         ,
         label.Label(
-            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text="SEP 15",
+            bitmap_font.load_font("/fonts/nond-5.bdf"), scale=1, x=0, y=0, text=date,
             color=c.BLACK
         )
     ]
@@ -159,7 +162,23 @@ def add_center(item: displayio.Bitmap | displayio.TileGrid) -> displayio.Group:
     return _group
 
 
-def get_weather():
+def get_weather(zip):
+    # pool = socketpool.SocketPool(wifi.radio)
+    # requests = adafruit_requests.Session(pool, ssl.create_default_context())
+    # source = ("http://api.weatherapi.com/v1/forecast.json?key="secrets.WEATHER_API_KEY"&q=" + zip +
+    #           "&days=3&aqi=no&alerts=no")
+    # print(gc.mem_free())
+    # gc.collect()
+    # print(gc.mem_free())
+    #
+    # response = requests.get(source).json()
+    # print(response)
+    # print(gc.mem_free())
+
+    # days = []
+    # for day in response["forecastday"]:
+    #     days.append(Weather(day))
+
     # weather = Weather(03110)
     # high = weather.high
     # low = weather.low
@@ -262,8 +281,9 @@ class DisplayManager(displayio.Group):
 
     def setup(self):
         connect_to_wifi(self.led)
+
         self.current_time = get_current_time()
-        self.weather = get_weather()
+        self.weather = get_weather(zip="00001")
         self.bitmap = displayio.Bitmap(c.WIDTH, c.HEIGHT, 21)
         self.palette = displayio.Palette(21)
         self.palette[0] = 0x1F00FF
@@ -344,15 +364,17 @@ class DisplayManager(displayio.Group):
 
 
 class Weather:
-    def __init__(self):
-        self.pool = socketpool.SocketPool(wifi.radio)
-        self.requests = adafruit_requests.Session(self.pool, ssl.create_default_context())
+    def __init__(self, day):
+        self.date = day["date"]
+        self.day_of_week = c.DAY_OF_WEEK[(day["date_epoch"] / 86400 + 4) % 7]
+        self.high = day["day"]["maxtemp_f"]
+        self.low = day["day"]["mintemp_f"]
+        self.condition = day["day"]["condition"]["text"]
+        self.average = day["day"]["avgtemp_f"]
+        self.precipitation = day["day"]["totalprecip_in"]
+        self.humidity = day["day"]["avghumidity"]
+        self.wind = day["day"]["maxwind_mph"]
+        self.snow = day["day"]["totalsnow_cm"]
+
         self.high = ""
-        self.low = ""
-#         self.source = (
-#             "http://api.weatherapi.com/v1/forecast.json?key=c0902e1fe459436db2e224800230609&q=02837&days=3&aqi=yes&alerts=no
-# "
-#         )
-#         self.tide_source = (
-#             ""
-#         )
+        self.low = None
