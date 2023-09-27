@@ -71,5 +71,4 @@ def get_weather_icon(weather_code):
     elif weather_code in (1198, 1201, 1204, 1207, 1237):
         return "ice.bmp"
     else:
-        return "unknown.bmp"  # Default icon for unknown weather codes
-
+        return "sunny.bmp"  # Default icon for unknown weather codes
