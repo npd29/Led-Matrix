@@ -26,74 +26,27 @@ led = DigitalInOut(board.LED)
 led.direction = Direction.OUTPUT
 led.value = False
 
+# OPTIONAL: set up button for screen switching
 button = DigitalInOut(board.GP14)
 button.direction = Direction.INPUT
 button.pull = Pull.DOWN
 
-#
-# scroll_text = adafruit_display_text.label.Label(
-#     terminalio.FONT,
-#     color=0x0080ff,
-#     text="Testing scrolling text")
-# scroll_text.x = display.width
-# scroll_text.y = 24
-
-# Put each line of text into a Group, then show that group.
-# g = displayio.Group()
-# g.append(scroll_text)
-# display.show(g)
 
 # set up display manager and display logo
 manager = DisplayManager(display, led)
 display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
 manager.setup()
-# manager.display_weather()
+
 gc.collect()
-
-# logo_bitmap, logo_palette = load(secrets.LOGO_PATH,
-#                                  bitmap=displayio.Bitmap,
-#                                  palette=displayio.Palette)
-# logo_palette[1] = 0x000000
-#
-# TILEGRID = displayio.TileGrid(bitmap=logo_bitmap,
-#                               pixel_shader=logo_palette,
-#                               x=32-logo_bitmap.width//2,
-#                               y=16-logo_bitmap.height//2)
-# for optimization?
-# BITMAP = displayio.OnDiskBitmap(FILENAME)
-# PALETTE = BITMAP.pixel_shader
-# TILEGRID = displayio.TileGrid(
-#     BITMAP,
-#     pixel_shader=PALETTE,
-#     tile_width=BITMAP.width,
-#     tile_height=BITMAP.height)
-
-# GROUP = displayio.Group(scale=1)
-# GROUP.append(TILEGRID)
-#
-# display.show(GROUP)
-
-# frame = Rect(0,0,64,32, fill=0x00FF00)  # Green color (0x00FF00)
-# connected = displayio.Group(scale=1)
-# connected.append(frame)
-# # connected.append(TILEGRID)
-# display.show(connected)
-# display.refresh()
-
-# display.show(None)
-# scroll(line2)
-# display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
-
-print("entering loop!")
+print("SETUP COMPLETE")
 displayScreen = 0
 prev_time = time.monotonic()
 pause = .5
+NUM_SCREENS = 3
 while True:
-
-    # manager.display_time()
-    if time.monotonic() - prev_time >= pause and button.value:
+    if time.monotonic() - prev_time >= pause and button.value: # button is pushed switch screens
         displayScreen += 1
-        displayScreen %= 3
+        displayScreen %= NUM_SCREENS
         prev_time = time.monotonic()
 
     # loop through screens when button is pushed
@@ -113,7 +66,4 @@ while True:
     if time.localtime()[5] == 0:
         manager.update_time()
 
-    # time.monotonic()
-    # if not manager.current_time.hidden:
-    #     manager.update_time()
     display.refresh(target_frames_per_second=10, minimum_frames_per_second=0)
